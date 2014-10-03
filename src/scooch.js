@@ -287,7 +287,10 @@
                 , opts = this.options
                 , lockLeft = false
                 , lockRight = false
-                , windowWidth = $(window).width();
+                , windowWidth = $(window).width()
+                , itemWidth = this.$items.last().width()
+                , viewportRight = this.$element.offset().left + this.$element.width()
+                , viewportLeft = this.$element.offset().left;
 
             function start(e) {
                 if (!has.touch) e.preventDefault();
@@ -303,8 +306,8 @@
                 // Disable smooth transitions
                 self._disableAnimation();
 
-                lockLeft = self._index == 1;
-                lockRight = self._index == self._length;
+                lockLeft = $inner.offset().left - viewportLeft >= 0;
+                lockRight = self.$items.last().offset().left + itemWidth - viewportRight <= 0;
             }
 
             function drag(e) {
@@ -314,6 +317,28 @@
                   , dragLimit = self.$element.width();
                 dx = xy.x - newXY.x;
                 dy = xy.y - newXY.y;
+                
+                lastDistance = self.$items.last().offset().left + itemWidth;
+                lastProximity = lastDistance - viewportRight;
+                
+                firstDistance = self.$items.first().offset().left;
+                firstProximity = firstDistance - viewportLeft;
+                
+                if(dx > 0) {
+                    if(lastProximity <= 0) {
+                        dx = 0;
+                    } else if(dx > lastProximity) {
+                        dx = lastProximity;
+                    }
+                }
+                
+                if(dx < 0) {
+                    if(firstProximity >= 0) {
+                        dx = 0;
+                    } else if(dx < firstProximity) {
+                        dx = -1 * abs(firstProximity);
+                    }
+                }
 
                 if (dragThresholdMet || abs(dx) > abs(dy) && (abs(dx) > dragRadius)) {
                     dragThresholdMet = true;
